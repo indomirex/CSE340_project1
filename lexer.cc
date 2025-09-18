@@ -126,6 +126,44 @@ Token LexicalAnalyzer::ScanNumber()
             }
                
         }
+        else if (c >= 'A' && c <= 'F'){
+            string sublexeme;
+            while (!input.EndOfInput() && (isdigit(c) || (c >= 'A' && c <= 'F'))){
+                sublexeme += c;
+                input.GetChar(c);
+            }
+            if (c == 'x'){
+                char c1,c2;
+                input.GetChar(c1);
+                input.GetChar(c2);
+                if (c1 == '1' && c2 == '6'){
+                    sublexeme += "x16";
+                    tmp.lexeme += sublexeme;
+                    tmp.token_type = BASE16NUM;
+                }
+                else if (c1 == '0' && c2 == '8'){
+                    sublexeme += "x08";
+                    tmp.lexeme += sublexeme;
+                    tmp.token_type = BASE08NUM;
+                }
+                else{
+                    sublexeme += 'x';
+                    sublexeme += c1;
+                    sublexeme += c2;
+                    for (int i = sublexeme.length() -1 ; i >= 0; --i){
+                        input.UngetChar(sublexeme[i]);
+                    }
+                    tmp.token_type = NUM;
+                }
+            }
+            else{
+                sublexeme += c;
+                for (int i = sublexeme.length() -1 ; i >= 0; --i){
+                    input.UngetChar(sublexeme[i]);
+                }
+                tmp.token_type = NUM;
+            }
+        }
         else if (c == 'x'){
             char c1,c2;
             input.GetChar(c1);
@@ -156,8 +194,7 @@ Token LexicalAnalyzer::ScanNumber()
                 input.UngetChar(c);
             }
         }
-        
-        
+    
         return tmp;
     } 
     else {
