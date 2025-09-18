@@ -104,89 +104,62 @@ Token LexicalAnalyzer::ScanNumber()
 
         input.GetChar(c);
         if (c == '.'){
-            tmp.lexeme += c;
             input.GetChar(c);
-            while (!input.EndOfInput() && isdigit(c)) {
-                tmp.lexeme += c;
-                input.GetChar(c);
+            if (!isdigit(c)){
+                if (!input.EndOfInput()){
+                    input.UngetChar(c);
+                    input.UngetChar('.');
+                    tmp.token_type = NUM;
+                }
             }
-            if (!input.EndOfInput()) {
-                input.UngetChar(c);
+            else{
+                tmp.lexeme += '.';
+                while (!input.EndOfInput() && isdigit(c)) {
+                    tmp.lexeme += c;
+                    input.GetChar(c);
+                }
+                if (!input.EndOfInput()) {
+                    input.UngetChar(c);
+                }
+                tmp.token_type = REALNUM;
+                tmp.line_no = line_no;
             }
-            tmp.token_type = REALNUM;
-            tmp.line_no = line_no;
+               
         }
         else if (c == 'x'){
-            bool isBase08 = false;
-            bool isBase16 = false;
-            tmp.lexeme += c;
-            input.GetChar(c);
-            while (!input.EndOfInput() && isdigit(c)) {
-                tmp.lexeme += c;
-                if (c == '1' || c == '6'){
-                    isBase16 = true;
-                    isBase08 = false;
-                }
-                else if (c == '0' || c == '8'){
-                    isBase08 = true;
-                    isBase16 = false;
-                }
-                else{
-                    isBase08 = false;
-                    isBase16 = false;
-                }
-                input.GetChar(c);
+            char c1,c2;
+            input.GetChar(c1);
+            input.GetChar(c2);
+            if (c1 == '1' && c2 == '6'){
+                tmp.lexeme += "x16";
+                tmp.token_type = BASE16NUM;
             }
-            if (!input.EndOfInput()) {
-                input.UngetChar(c);
-            }
-            if (isBase08){
+            else if (c1 == '0' && c2 == '8'){
+                tmp.lexeme += "x08";
                 tmp.token_type = BASE08NUM;
             }
-            else if (isBase16){
-                tmp.token_type = BASE16NUM;
+            else{
+                if (!input.EndOfInput()){
+                    input.UngetChar(c2);
+                }
+                if (!input.EndOfInput()){
+                    input.UngetChar(c1);
+                }
+                input.UngetChar('x');
+                tmp.token_type = NUM;
             }
             
             tmp.line_no = line_no;
         }
+        else{
+            if (!input.EndOfInput()){
+                input.UngetChar(c);
+            }
+        }
+        
         
         return tmp;
     } 
-    else if (c == ('A' | 'B' | 'C' | 'D' | 'E' | 'F')){
-        tmp.lexeme += c;
-        bool isBase16 = false;
-        input.GetChar(c);
-        while(!input.EndOfInput() && (isdigit(c) || (c == ('A' | 'B' | 'C' | 'D' | 'E' | 'F')))){
-            tmp.lexeme += c;
-            input.GetChar(c);
-        }
-        if (!input.EndOfInput() && (c == 'x')){
-            tmp.lexeme += c;
-            input.GetChar(c);
-            while (!input.EndOfInput() && isdigit(c)){
-                tmp.lexeme += c;
-                if (c == '1' || c == '6'){
-                    isBase16 = true;
-                }
-                else{
-                    isBase16 = false;
-                }
-                input.GetChar(c);
-            }
-        }
-        if (!input.EndOfInput()) {
-            input.UngetChar(c);
-        }
-        if (isBase16){
-            tmp.token_type = BASE16NUM;
-        }
-        else{
-            tmp.token_type = ERROR;
-        }
-        tmp.line_no = line_no;
-        return tmp;
-
-    }
     else {
         if (!input.EndOfInput()) {
             input.UngetChar(c);
